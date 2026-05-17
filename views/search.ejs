@@ -1,0 +1,117 @@
+<%- include('partials/header') %>
+
+<div class="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
+    
+    <!-- Sidebar Filters -->
+    <aside class="w-full md:w-1/4">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                Lọc Sản Phẩm
+            </h2>
+            
+            <form action="/search" method="GET">
+                <% if (query.q) { %>
+                    <input type="hidden" name="q" value="<%= query.q %>">
+                <% } %>
+
+                <!-- Category Filter -->
+                <div class="mb-6">
+                    <h3 class="font-semibold text-gray-700 mb-3">Danh Mục</h3>
+                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="category" value="" class="text-blue-600 focus:ring-blue-500 rounded" <%= !query.category ? 'checked' : '' %>>
+                            <span class="text-gray-600 text-sm">Tất cả</span>
+                        </label>
+                        <% categories.forEach(cat => { %>
+                            <label class="flex items-center space-x-2">
+                                <input type="radio" name="category" value="<%= cat.id %>" class="text-blue-600 focus:ring-blue-500 rounded" <%= query.category == cat.id ? 'checked' : '' %>>
+                                <span class="text-gray-600 text-sm"><%= cat.name %></span>
+                            </label>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <!-- Price Filter -->
+                <div class="mb-6">
+                    <h3 class="font-semibold text-gray-700 mb-3">Khoảng Giá (VNĐ)</h3>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" name="minPrice" placeholder="Từ" value="<%= query.minPrice || '' %>" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                        <span class="text-gray-400">-</span>
+                        <input type="number" name="maxPrice" placeholder="Đến" value="<%= query.maxPrice || '' %>" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-blue-200">
+                    Áp dụng lọc
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content (Search Results) -->
+    <main class="w-full md:w-3/4">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Kết quả tìm kiếm <%= query.q ? `cho "${query.q}"` : '' %></h1>
+            <p class="text-gray-500 text-sm mt-1">Tìm thấy <%= products.length %> sản phẩm phù hợp.</p>
+        </div>
+
+        <% if (products.length > 0) { %>
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                <% products.forEach(product => { %>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full relative">
+                        <% if (product.is_new) { %>
+                            <div class="absolute top-3 left-3 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">MỚI</div>
+                        <% } %>
+                        <% if (product.discount_price && product.discount_price < product.price) { %>
+                            <div class="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
+                                -<%= Math.round((1 - product.discount_price / product.price) * 100) %>%
+                            </div>
+                        <% } %>
+                        
+                        <a href="/product/<%= product.id %>" class="relative aspect-square overflow-hidden bg-gray-50 flex items-center justify-center p-4 block">
+                            <img src="<%= product.image || 'https://via.placeholder.com/400' %>" alt="<%= product.name %>" class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-500">
+                        </a>
+                
+                        <div class="p-5 flex flex-col flex-1">
+                            <div class="text-xs text-blue-500 font-semibold mb-1 uppercase"><%= product.category_name %></div>
+                            <a href="/product/<%= product.id %>" class="block mb-2 group-hover:text-blue-600 transition-colors">
+                                <h3 class="font-semibold text-gray-800 line-clamp-2"><%= product.name %></h3>
+                            </a>
+                            
+                            <div class="mt-auto pt-4 flex items-end justify-between">
+                                <div>
+                                    <% if (product.discount_price && product.discount_price < product.price) { %>
+                                        <div class="text-red-600 font-bold text-lg">
+                                            <%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.discount_price) %>
+                                        </div>
+                                        <div class="text-gray-400 text-sm line-through">
+                                            <%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price) %>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="text-blue-600 font-bold text-lg">
+                                            <%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price) %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                <button class="bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 p-2 rounded-xl transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <h3 class="text-xl font-bold text-gray-700 mb-2">Không tìm thấy sản phẩm nào!</h3>
+                <p class="text-gray-500">Vui lòng thử lại với các điều kiện lọc hoặc từ khóa khác.</p>
+                <a href="/search" class="inline-block mt-6 text-blue-600 font-medium hover:underline">Xóa bộ lọc</a>
+            </div>
+        <% } %>
+    </main>
+
+</div>
+
+<%- include('partials/footer') %>
