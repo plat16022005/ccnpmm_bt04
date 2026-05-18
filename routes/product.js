@@ -20,6 +20,9 @@ router.get('/:id', async (req, res) => {
 
         const product = productData[0];
 
+        // Increment views
+        await db.query(`UPDATE products SET views = views + 1 WHERE id = ?`, [productId]);
+
         // Fetch images
         const [images] = await db.query(`
             SELECT image_url FROM product_images WHERE product_id = ?

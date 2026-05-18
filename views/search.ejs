@@ -57,7 +57,7 @@
         </div>
 
         <% if (products.length > 0) { %>
-            <div class="grid grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="product-grid" class="grid grid-cols-2 lg:grid-cols-3 gap-6">
                 <% products.forEach(product => { %>
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full relative">
                         <% if (product.is_new) { %>
@@ -102,6 +102,101 @@
                     </div>
                 <% }) %>
             </div>
+            
+            <div id="loading" class="text-center py-6 text-gray-500 font-medium hidden">
+                <svg class="animate-spin h-6 w-6 mx-auto mb-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Đang tải thêm sản phẩm...
+            </div>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    let page = 1;
+                    let hasMore = <%= products.length >= 6 ? 'true' : 'false' %>;
+                    let isFetching = false;
+                    const loading = document.getElementById('loading');
+                    const productGrid = document.getElementById('product-grid');
+
+                    if(loading && hasMore) {
+                        loading.classList.remove('hidden');
+                        const observer = new IntersectionObserver(async (entries) => {
+                            if(entries[0].isIntersecting && hasMore && !isFetching) {
+                                isFetching = true;
+                                page++;
+                                
+                                const params = new URLSearchParams(window.location.search);
+                                params.set('page', page);
+                                
+                                try {
+                                    const res = await fetch('/api/products?' + params.toString());
+                                    const data = await res.json();
+                                    
+                                    if(data.products.length === 0) {
+                                        hasMore = false;
+                                        loading.innerHTML = 'Đã tải hết sản phẩm';
+                                    } else {
+                                        data.products.forEach(product => {
+                                            const priceStr = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price);
+                                            const discountPriceStr = product.discount_price ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.discount_price) : '';
+                                            
+                                            const html = `
+                                                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full relative">
+                                                    ${product.is_new ? '<div class="absolute top-3 left-3 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">MỚI</div>' : ''}
+                                                    ${product.discount_price && product.discount_price < product.price ? 
+                                                        `<div class="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
+                                                            -${Math.round((1 - product.discount_price / product.price) * 100)}%
+                                                        </div>` : ''}
+                                                    
+                                                    <a href="/product/${product.id}" class="relative aspect-square overflow-hidden bg-gray-50 flex items-center justify-center p-4 block">
+                                                        <img src="${product.image || 'https://via.placeholder.com/400'}" alt="${product.name}" class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-500">
+                                                    </a>
+
+                                                    <div class="p-5 flex flex-col flex-1">
+                                                        <div class="text-xs text-blue-500 font-semibold mb-1 uppercase">${product.category_name || ''}</div>
+                                                        <a href="/product/${product.id}" class="block mb-2 group-hover:text-blue-600 transition-colors">
+                                                            <h3 class="font-semibold text-gray-800 line-clamp-2">${product.name}</h3>
+                                                        </a>
+                                                        
+                                                        <div class="mt-auto pt-4 flex items-end justify-between">
+                                                            <div>
+                                                                ${product.discount_price && product.discount_price < product.price ? `
+                                                                    <div class="text-red-600 font-bold text-lg">${discountPriceStr}</div>
+                                                                    <div class="text-gray-400 text-sm line-through">${priceStr}</div>
+                                                                ` : `
+                                                                    <div class="text-blue-600 font-bold text-lg">${priceStr}</div>
+                                                                `}
+                                                            </div>
+                                                            <button class="bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 p-2 rounded-xl transition-colors">
+                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                            productGrid.insertAdjacentHTML('beforeend', html);
+                                        });
+                                        if(data.products.length < 6) {
+                                            hasMore = false;
+                                            loading.innerHTML = 'Đã tải hết sản phẩm';
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error('Error fetching products:', error);
+                                    loading.innerHTML = 'Lỗi khi tải thêm sản phẩm';
+                                } finally {
+                                    isFetching = false;
+                                }
+                            }
+                        }, { threshold: 0.1 });
+                        
+                        observer.observe(loading);
+                    } else if(loading) {
+                        loading.innerHTML = '';
+                    }
+                });
+            </script>
         <% } else { %>
             <div class="bg-white rounded-2xl border border-gray-100 p-12 text-center">
                 <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>

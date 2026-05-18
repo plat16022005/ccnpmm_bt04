@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS products (
     discount_price DECIMAL(10,2),
     stock INT DEFAULT 0,
     sold INT DEFAULT 0,
+    views INT DEFAULT 0,
     is_promoted BOOLEAN DEFAULT FALSE,
     is_new BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

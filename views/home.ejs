@@ -83,14 +83,116 @@
 
     <!-- Best Selling -->
     <section>
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 border-l-4 border-green-500 pl-4 uppercase">Bán Chạy Nhất</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div class="flex justify-between items-center mb-6 border-b pb-2">
+            <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-green-500 pl-4 uppercase">Bán Chạy Nhất</h2>
+            <div class="flex gap-2">
+                <button id="btn-prev-bs" disabled class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 disabled:opacity-50 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <button id="btn-next-bs" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 disabled:opacity-50 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+            </div>
+        </div>
+        <div id="best-selling-grid" class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <% bestSelling.forEach(product => { renderProductCard(product); }) %>
         </div>
         <% if (bestSelling.length === 0) { %>
             <p class="text-gray-500 text-center">Chưa có sản phẩm.</p>
         <% } %>
     </section>
+
+    <!-- Most Viewed -->
+    <section>
+        <div class="flex justify-between items-center mb-6 border-b pb-2">
+            <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-purple-500 pl-4 uppercase">Xem Nhiều Nhất</h2>
+            <div class="flex gap-2">
+                <button id="btn-prev-mv" disabled class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 disabled:opacity-50 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <button id="btn-next-mv" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 disabled:opacity-50 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+            </div>
+        </div>
+        <div id="most-viewed-grid" class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <% mostViewed.forEach(product => { renderProductCard(product); }) %>
+        </div>
+        <% if (mostViewed.length === 0) { %>
+            <p class="text-gray-500 text-center">Chưa có sản phẩm.</p>
+        <% } %>
+    </section>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const createProductHTML = (product) => {
+            const priceStr = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price);
+            const discountPriceStr = product.discount_price ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.discount_price) : '';
+            return `
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full relative animate-fade-in">
+                    ${product.is_new ? '<div class="absolute top-3 left-3 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">MỚI</div>' : ''}
+                    ${product.discount_price && product.discount_price < product.price ? 
+                        `<div class="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md z-10">
+                            -${Math.round((1 - product.discount_price / product.price) * 100)}%
+                        </div>` : ''}
+                    
+                    <a href="/product/${product.id}" class="relative aspect-square overflow-hidden bg-gray-50 flex items-center justify-center p-4 block">
+                        <img src="${product.image || 'https://via.placeholder.com/400'}" alt="${product.name}" class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-500">
+                    </a>
+
+                    <div class="p-5 flex flex-col flex-1">
+                        <a href="/product/${product.id}" class="block mb-2 group-hover:text-blue-600 transition-colors">
+                            <h3 class="font-semibold text-gray-800 line-clamp-2 text-sm">${product.name}</h3>
+                        </a>
+                        
+                        <div class="mt-auto pt-4 flex items-end justify-between">
+                            <div>
+                                ${product.discount_price && product.discount_price < product.price ? `
+                                    <div class="text-red-600 font-bold text-sm">${discountPriceStr}</div>
+                                    <div class="text-gray-400 text-xs line-through">${priceStr}</div>
+                                ` : `
+                                    <div class="text-blue-600 font-bold text-sm">${priceStr}</div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const setupPagination = (apiUrl, gridId, prevBtnId, nextBtnId) => {
+            let page = 1;
+            const grid = document.getElementById(gridId);
+            const btnPrev = document.getElementById(prevBtnId);
+            const btnNext = document.getElementById(nextBtnId);
+
+            const loadPage = async (p) => {
+                try {
+                    const res = await fetch(`${apiUrl}?page=${p}`);
+                    const data = await res.json();
+                    
+                    if(data.products && data.products.length > 0) {
+                        grid.innerHTML = data.products.map(createProductHTML).join('');
+                        page = p;
+                        btnPrev.disabled = page === 1;
+                        btnNext.disabled = data.products.length < 5;
+                    } else {
+                        btnNext.disabled = true;
+                    }
+                } catch (e) {
+                    console.error('Error fetching pagination data', e);
+                }
+            };
+
+            if(btnNext) {
+                btnNext.addEventListener('click', () => loadPage(page + 1));
+            }
+            if(btnPrev) {
+                btnPrev.addEventListener('click', () => loadPage(page - 1));
+            }
+        };
+
+        setupPagination('/api/products/best-selling', 'best-selling-grid', 'btn-prev-bs', 'btn-next-bs');
+        setupPagination('/api/products/most-viewed', 'most-viewed-grid', 'btn-prev-mv', 'btn-next-mv');
+    });
+</script>
+
+<style>
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+</style>
 
 <%- include('partials/footer') %>
