@@ -88,10 +88,10 @@
                     </div>
 
                     <div class="flex space-x-4">
-                        <button class="flex-1 border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-3 px-6 rounded-xl transition-colors flex justify-center items-center">
+                        <button onclick="addToCart(<%= product.id %>, parseInt(document.getElementById('qty').value))" class="flex-1 border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-3 px-6 rounded-xl transition-colors flex justify-center items-center">
                             Thêm vào giỏ
                         </button>
-                        <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-blue-200 transition-colors flex justify-center items-center">
+                        <button onclick="buyNow(<%= product.id %>)" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-blue-200 transition-colors flex justify-center items-center">
                             Mua ngay
                         </button>
                     </div>
@@ -114,10 +114,13 @@
                             <a href="/product/<%= sp.id %>" class="block mb-2 group-hover:text-blue-600 transition-colors">
                                 <h3 class="font-semibold text-gray-800 line-clamp-2"><%= sp.name %></h3>
                             </a>
-                            <div class="mt-auto pt-4">
+                            <div class="mt-auto pt-4 flex items-end justify-between">
                                 <div class="text-blue-600 font-bold text-lg">
                                     <%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(sp.discount_price || sp.price) %>
                                 </div>
+                                <button onclick="addToCart(<%= sp.id %>)" class="bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-700 p-2 rounded-xl transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -142,6 +145,28 @@
         let current = parseInt(input.value);
         if (current > 1) {
             input.value = current - 1;
+        }
+    }
+
+    async function buyNow(productId) {
+        const qty = parseInt(input.value);
+        try {
+            const res = await fetch('/cart/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, quantity: qty })
+            });
+            if (res.redirected) {
+                window.location.href = res.url;
+                return;
+            }
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = '/cart';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            window.location.href = '/auth/login';
         }
     }
 </script>

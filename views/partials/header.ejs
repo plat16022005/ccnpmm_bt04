@@ -28,14 +28,18 @@
             <div class="flex items-center space-x-6">
                 <a href="/cart" class="text-gray-600 hover:text-blue-600 relative">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
                 </a>
                 
                 <% if (locals.user) { %>
                     <div class="flex items-center space-x-4">
                         <div class="text-sm">
                             <p class="font-semibold text-gray-800">Chào, <%= user.fullname %></p>
-                            <p class="text-xs text-gray-500 capitalize"><%= user.role %></p>
+                            <div class="flex items-center space-x-2">
+                                <a href="/orders" class="text-xs text-blue-500 hover:underline">Đơn hàng</a>
+                                <span class="text-gray-300 text-xs">|</span>
+                                <p class="text-xs text-gray-500 capitalize"><%= user.role %></p>
+                            </div>
                         </div>
                         <a href="/auth/logout" class="text-gray-500 hover:text-red-500 transition" title="Đăng xuất">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -50,5 +54,46 @@
             </div>
         </div>
     </header>
+
+    <script>
+        async function updateCartCount() {
+            try {
+                const res = await fetch('/cart/count');
+                const data = await res.json();
+                document.getElementById('cart-count').textContent = data.count || 0;
+            } catch (error) {
+                console.error('Error fetching cart count:', error);
+            }
+        }
+        
+        async function addToCart(productId, quantity = 1) {
+            try {
+                const res = await fetch('/cart/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId, quantity })
+                });
+                
+                if (res.redirected) {
+                    window.location.href = res.url;
+                    return;
+                }
+                
+                const data = await res.json();
+                if (data.success) {
+                    updateCartCount();
+                    alert(data.message);
+                } else {
+                    alert(data.message || 'Lỗi khi thêm vào giỏ hàng');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Vui lòng đăng nhập để sử dụng tính năng này');
+                window.location.href = '/auth/login';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', updateCartCount);
+    </script>
     
     <main class="flex-grow">

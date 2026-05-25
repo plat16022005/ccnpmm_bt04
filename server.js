@@ -31,11 +31,17 @@ app.use((req, res, next) => {
 const indexRoutes = require('./routes/index');
 const productRoutes = require('./routes/product');
 const authRoutes = require('./routes/auth');
+const cartRoutes = require('./routes/cart');
+const checkoutRoutes = require('./routes/checkout');
+const orderRoutes = require('./routes/order');
 
 // Use Routes
 app.use('/', indexRoutes);
 app.use('/product', productRoutes);
 app.use('/auth', authRoutes);
+app.use('/cart', cartRoutes);
+app.use('/checkout', checkoutRoutes);
+app.use('/orders', orderRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
