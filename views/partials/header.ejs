@@ -37,6 +37,10 @@
                             <p class="font-semibold text-gray-800">Chào, <%= user.fullname %></p>
                             <div class="flex items-center space-x-2">
                                 <a href="/orders" class="text-xs text-blue-500 hover:underline">Đơn hàng</a>
+                                <% if (user.role === 'admin') { %>
+                                    <span class="text-gray-300 text-xs">|</span>
+                                    <a href="/admin" class="text-xs text-red-500 font-bold hover:underline">Quản trị</a>
+                                <% } %>
                                 <span class="text-gray-300 text-xs">|</span>
                                 <p class="text-xs text-gray-500 capitalize"><%= user.role %></p>
                             </div>

@@ -41,6 +41,7 @@ router.get('/', isAuthenticated, async (req, res) => {
 router.get('/:id', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.user.id;
+        const userRole = req.session.user.role;
         const orderId = req.params.id;
 
         // Auto-confirm this order if pending > 30 mins
@@ -50,12 +51,21 @@ router.get('/:id', isAuthenticated, async (req, res) => {
             WHERE id = ? AND status = 'pending' AND created_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)
         `, [orderId]);
 
-        const [orders] = await db.query(`
-            SELECT * FROM orders WHERE id = ? AND user_id = ?
-        `, [orderId, userId]);
+        let orders;
+        if (userRole === 'admin') {
+            // Admin can see any order
+            [orders] = await db.query(`
+                SELECT * FROM orders WHERE id = ?
+            `, [orderId]);
+        } else {
+            // Members can only see their own orders
+            [orders] = await db.query(`
+                SELECT * FROM orders WHERE id = ? AND user_id = ?
+            `, [orderId, userId]);
+        }
 
         if (orders.length === 0) {
-            return res.status(404).send('Không tìm thấy đơn hàng');
+            return res.status(404).send('Không tìm thấy đơn hàng hoặc bạn không có quyền xem');
         }
 
         const order = orders[0];

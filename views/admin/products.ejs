@@ -1,0 +1,44 @@
+<%- include('../partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Quản lý sản phẩm</h1>
+        <a href="/admin/products/add" class="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+            + Thêm sản phẩm
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-gray-50 border-b border-gray-100">
+                <tr>
+                    <th class="px-6 py-4 font-semibold text-gray-700">ID</th>
+                    <th class="px-6 py-4 font-semibold text-gray-700">Tên sản phẩm</th>
+                    <th class="px-6 py-4 font-semibold text-gray-700">Danh mục</th>
+                    <th class="px-6 py-4 font-semibold text-gray-700 text-right">Giá</th>
+                    <th class="px-6 py-4 font-semibold text-gray-700 text-center">Tồn kho</th>
+                    <th class="px-6 py-4 font-semibold text-gray-700 text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                <% products.forEach(product => { %>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 text-gray-500">#<%= product.id %></td>
+                        <td class="px-6 py-4 font-medium text-gray-800"><%= product.name %></td>
+                        <td class="px-6 py-4 text-gray-600"><%= product.category_name %></td>
+                        <td class="px-6 py-4 text-right font-bold text-blue-600">
+                            <%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price) %>
+                        </td>
+                        <td class="px-6 py-4 text-center text-gray-600"><%= product.stock %></td>
+                        <td class="px-6 py-4 text-center">
+                            <button class="text-blue-600 hover:underline mr-3">Sửa</button>
+                            <button class="text-red-600 hover:underline">Xóa</button>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

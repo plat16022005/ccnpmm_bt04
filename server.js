@@ -34,6 +34,7 @@ const authRoutes = require('./routes/auth');
 const cartRoutes = require('./routes/cart');
 const checkoutRoutes = require('./routes/checkout');
 const orderRoutes = require('./routes/order');
+const adminRoutes = require('./routes/admin');
 
 // Use Routes
 app.use('/', indexRoutes);
@@ -42,6 +43,7 @@ app.use('/auth', authRoutes);
 app.use('/cart', cartRoutes);
 app.use('/checkout', checkoutRoutes);
 app.use('/orders', orderRoutes);
+app.use('/admin', adminRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
